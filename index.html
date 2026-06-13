@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Футбол"/>
+<title>Футбольный трекер</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;background:linear-gradient(135deg,#0a0f1e 0%,#0d1b2a 50%,#0a1628 100%);
+  font-family:-apple-system,'Inter','Segoe UI',sans-serif;color:#e2e8f0;padding-bottom:80px}
+input,textarea,button{-webkit-appearance:none;appearance:none;font-family:inherit}
+.header{background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.08);
+  padding:16px 16px 0;position:sticky;top:0;backdrop-filter:blur(12px);z-index:10}
+.header-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.header-title{font-size:18px;font-weight:700;color:#fff}
+.header-sub{font-size:11px;color:#64748b;margin-top:2px}
+.tabs{display:flex;gap:2px}
+.tab{padding:8px 12px;border-radius:8px 8px 0 0;border:none;background:transparent;
+  color:#64748b;border-bottom:2px solid transparent;cursor:pointer;font-size:13px;transition:all 0.15s;white-space:nowrap}
+.tab.active{background:rgba(34,197,94,0.15);color:#22c55e;border-bottom:2px solid #22c55e;font-weight:600}
+.main{max-width:600px;margin:0 auto;padding:20px 14px 0}
+.card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:18px;margin-bottom:14px}
+.section-label{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.input{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;outline:none;display:block}
+.input::placeholder{color:#475569}
+.input:focus{border-color:#22c55e;background:rgba(34,197,94,0.06)}
+.input.error{background:rgba(239,68,68,0.15);border-color:#ef4444}
+.input-date{color-scheme:dark}
+.input-label{font-size:11px;color:#64748b;margin-bottom:5px;font-weight:500}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.score-grid{display:grid;grid-template-columns:1fr 44px 1fr;gap:8px;align-items:start}
+.team-label{font-size:11px;color:#64748b;font-weight:600;margin-bottom:6px}
+.vs{text-align:center;padding-top:28px;font-size:20px;color:rgba(255,255,255,0.2);font-weight:700}
+.fill-bar-bg{height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden}
+.fill-bar-fg{height:100%;border-radius:4px;transition:width 0.3s}
+.btn-submit{width:100%;padding:15px;background:linear-gradient(135deg,#16a34a,#22c55e);
+  border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 24px rgba(34,197,94,0.3);margin-bottom:10px}
+.btn-cancel{width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,0.1);
+  border-radius:12px;color:#64748b;font-size:14px;cursor:pointer}
+.match-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+  border-radius:14px;padding:14px;margin-bottom:12px;border-left:3px solid #22c55e}
+.score-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:12px}
+.score-box{font-size:22px;font-weight:800;color:#fff;background:rgba(255,255,255,0.07);
+  padding:4px 12px;border-radius:8px;letter-spacing:2px;text-align:center}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;
+  background:rgba(255,255,255,0.03);border-radius:10px;padding:10px 4px;margin-bottom:10px}
+.stat-cell{text-align:center}
+.actions{display:flex;gap:8px}
+.btn-edit{flex:1;padding:8px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);
+  border-radius:8px;color:#60a5fa;font-size:13px;cursor:pointer}
+.btn-del{padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);
+  border-radius:8px;color:#f87171;font-size:13px;cursor:pointer}
+.stat-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-card{background:rgba(255,255,255,0.04);border-radius:14px;padding:14px}
+.empty{text-align:center;padding:60px 20px;color:#475569}
+.flash{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;
+  background:#16a34a;color:#fff;padding:12px 28px;border-radius:30px;font-size:14px;
+  font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.5);pointer-events:none;
+  opacity:0;transition:opacity 0.3s;white-space:nowrap}
+.flash.error-flash{background:#ef4444}
+.flash.show{opacity:1}
+.hidden{display:none}
+.save-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 10px;
+  border-radius:20px;background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.2)}
+</style>
+</head>
+<body>
+
+<div class="flash" id="flash"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <span style="font-size:26px">⚽</span>
+    <div style="flex:1">
+      <div class="header-title">Футбольный трекер</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+        <div class="header-sub" id="match-count">0 матчей</div>
+        <div class="save-status" id="save-status">💾 сохранено</div>
+      </div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('form')" id="tab-form">➕ Новый матч</button>
+    <button class="tab" onclick="switchTab('history')" id="tab-history">📋 История</button>
+    <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 Статистика</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- FORM -->
+  <div id="view-form">
+    <div class="card">
+      <div class="section-label">📅 Дата и место</div>
+      <div class="grid2">
+        <div>
+          <input class="input input-date" type="date" id="f-date"/>
+          <div id="err-date" style="color:#ef4444;font-size:11px;margin-top:3px;display:none">Укажи дату</div>
+        </div>
+        <input class="input" type="text" id="f-stadium" placeholder="Стадион (необяз.)"/>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">⚽ Команды и счёт</div>
+      <div class="score-grid">
+        <div>
+          <div class="team-label">ХОЗЯЕВА</div>
+          <input class="input" type="text" id="f-home-team" placeholder="Команда" style="margin-bottom:8px"/>
+          <div id="err-home-team" style="color:#ef4444;font-size:11px;margin-bottom:4px;display:none">Введи название</div>
+          <input class="input" type="number" min="0" id="f-home-goals" placeholder="Голы"/>
+          <div id="err-home-goals" style="color:#ef4444;font-size:11px;margin-top:3px;display:none">Введи голы</div>
+        </div>
+        <div class="vs">—</div>
+        <div>
+          <div class="team-label">ГОСТИ</div>
+          <input class="input" type="text" id="f-away-team" placeholder="Команда" style="margin-bottom:8px"/>
+          <div id="err-away-team" style="color:#ef4444;font-size:11px;margin-bottom:4px;display:none">Введи название</div>
+          <input class="input" type="number" min="0" id="f-away-goals" placeholder="Голы"/>
+          <div id="err-away-goals" style="color:#ef4444;font-size:11px;margin-top:3px;display:none">Введи голы</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">🟨🟥 Карточки</div>
+      <div class="grid2">
+        <div><div class="input-label">🟨 Хозяева</div><input class="input" type="number" min="0" id="f-home-yellow" placeholder="0"/></div>
+        <div><div class="input-label">🟨 Гости</div><input class="input" type="number" min="0" id="f-away-yellow" placeholder="0"/></div>
+        <div><div class="input-label">🟥 Хозяева</div><input class="input" type="number" min="0" id="f-home-red" placeholder="0"/></div>
+        <div><div class="input-label">🟥 Гости</div><input class="input" type="number" min="0" id="f-away-red" placeholder="0"/></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">🔄 Замены</div>
+      <div class="grid2">
+        <div><div class="input-label">Хозяева</div><input class="input" type="number" min="0" id="f-home-subs" placeholder="0"/></div>
+        <div><div class="input-label">Гости</div><input class="input" type="number" min="0" id="f-away-subs" placeholder="0"/></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">👥 Зрители и вместимость</div>
+      <div class="grid2">
+        <div><div class="input-label">Зрителей на матче</div><input class="input" type="number" min="0" id="f-attendance" placeholder="45000" oninput="updateFillPreview()"/></div>
+        <div><div class="input-label">Вместимость стадиона</div><input class="input" type="number" min="0" id="f-capacity" placeholder="60000" oninput="updateFillPreview()"/></div>
+      </div>
+      <div id="fill-preview" style="margin-top:12px;display:none">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+          <span style="color:#94a3b8">Заполняемость</span>
+          <span id="fill-pct-label" style="font-weight:700"></span>
+        </div>
+        <div class="fill-bar-bg"><div class="fill-bar-fg" id="fill-bar-fg"></div></div>
+      </div>
+    </div>
+
+    <button class="btn-submit" id="btn-submit" onclick="submitForm()">✅ Сохранить матч</button>
+    <button class="btn-cancel hidden" id="btn-cancel" onclick="cancelEdit()">Отмена</button>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="view-history" class="hidden">
+    <div id="history-empty" class="empty hidden">
+      <div style="font-size:48px;margin-bottom:12px">⚽</div>
+      <div style="font-size:16px;margin-bottom:6px">Матчей пока нет</div>
+      <div style="font-size:13px">Добавь первый матч</div>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+  <!-- STATS -->
+  <div id="view-stats" class="hidden">
+    <div id="stats-empty" class="empty hidden">
+      <div style="font-size:48px;margin-bottom:12px">📊</div>
+      <div style="font-size:16px">Статистика появится после добавления матчей</div>
+    </div>
+    <div id="stats-content"></div>
+  </div>
+</div>
+
+<script>
+// ── IndexedDB storage ─────────────────────────────────────
+const DB_NAME = 'FootballTracker';
+const DB_VER = 1;
+const STORE = 'matches';
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore(STORE, { keyPath: 'id' });
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbGetAll() {
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => resolve([]);
+    } catch(e) { resolve([]); }
+  });
+}
+
+function dbPut(item) {
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put(item);
+      tx.oncomplete = resolve;
+      tx.onerror = resolve;
+    } catch(e) { resolve(); }
+  });
+}
+
+function dbDelete(id) {
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).delete(id);
+      tx.oncomplete = resolve;
+      tx.onerror = resolve;
+    } catch(e) { resolve(); }
+  });
+}
+
+async function dbClear() {
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).clear();
+      tx.oncomplete = resolve;
+    } catch(e) { resolve(); }
+  });
+}
+
+async function saveAll() {
+  await dbClear();
+  for (const m of matches) await dbPut(m);
+  setSaveStatus(true);
+}
+
+// ── App state ─────────────────────────────────────────────
+let matches = [];
+let editId = null;
+
+// ── Helpers ───────────────────────────────────────────────
+function fillPct(m){
+  if(!m.capacity||m.capacity<=0||!m.attendance) return null;
+  return Math.min(100,Math.round((m.attendance/m.capacity)*100));
+}
+function fillColor(p){ return p>=90?'#22c55e':p>=60?'#f59e0b':'#ef4444'; }
+function resultColor(m){ return m.homeGoals>m.awayGoals?'#22c55e':m.homeGoals<m.awayGoals?'#ef4444':'#f59e0b'; }
+function resultLabel(m){ return m.homeGoals>m.awayGoals?'П1':m.homeGoals<m.awayGoals?'П2':'Н'; }
+function fmtNum(n){ return n?Number(n).toLocaleString('ru-RU'):'—'; }
+function fmtDate(d){
+  if(!d) return '—';
+  return new Date(d+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+}
+function matchCountStr(){
+  const n=matches.length;
+  return n===1?'1 матч':n<5&&n>0?n+' матча':n+' матчей';
+}
+function showFlash(msg, isErr){
+  const f=document.getElementById('flash');
+  f.textContent=msg;
+  f.classList.toggle('error-flash', !!isErr);
+  f.classList.add('show');
+  setTimeout(()=>f.classList.remove('show'),2500);
+}
+function setSaveStatus(ok){
+  const el=document.getElementById('save-status');
+  el.textContent = ok ? '💾 сохранено' : '⏳ сохранение...';
+  el.style.color = ok ? '#22c55e' : '#f59e0b';
+}
+function updateMatchCount(){
+  document.getElementById('match-count').textContent = matchCountStr();
+}
+
+// ── Tabs ──────────────────────────────────────────────────
+function switchTab(tab){
+  ['form','history','stats'].forEach(t=>{
+    document.getElementById('view-'+t).classList.toggle('hidden',t!==tab);
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+  if(tab==='history') renderHistory();
+  if(tab==='stats') renderStats();
+  document.getElementById('tab-form').textContent = editId?'✏️ Редактировать':'➕ Новый матч';
+}
+
+// ── Fill preview ──────────────────────────────────────────
+function updateFillPreview(){
+  const att=Number(document.getElementById('f-attendance').value);
+  const cap=Number(document.getElementById('f-capacity').value);
+  const wrap=document.getElementById('fill-preview');
+  if(att>0&&cap>0){
+    const pct=Math.min(100,Math.round((att/cap)*100));
+    const col=fillColor(pct);
+    document.getElementById('fill-pct-label').textContent=pct+'%';
+    document.getElementById('fill-pct-label').style.color=col;
+    document.getElementById('fill-bar-fg').style.width=pct+'%';
+    document.getElementById('fill-bar-fg').style.background=col;
+    wrap.style.display='block';
+  } else { wrap.style.display='none'; }
+}
+
+// ── Form ──────────────────────────────────────────────────
+function gf(id){ return document.getElementById(id).value.trim(); }
+function sf(id,val){ document.getElementById(id).value=val??''; }
+function showErr(id,show){
+  const el=document.getElementById('err-'+id);
+  if(el) el.style.display=show?'block':'none';
+  const inp=document.getElementById('f-'+id);
+  if(inp) inp.classList.toggle('error',show);
+}
+function validate(){
+  let ok=true;
+  [['date',!gf('date')],['home-team',!gf('home-team')],['away-team',!gf('away-team')],
+   ['home-goals',gf('home-goals')===''||isNaN(gf('home-goals'))],
+   ['away-goals',gf('away-goals')===''||isNaN(gf('away-goals'))]
+  ].forEach(([id,fail])=>{ showErr(id,fail); if(fail) ok=false; });
+  return ok;
+}
+
+async function submitForm(){
+  if(!validate()) return;
+  const entry={
+    id:editId??Date.now(),
+    date:gf('date'), stadium:gf('stadium'),
+    homeTeam:gf('home-team'), awayTeam:gf('away-team'),
+    homeGoals:Number(gf('home-goals'))||0, awayGoals:Number(gf('away-goals'))||0,
+    homeYellow:Number(gf('home-yellow'))||0, awayYellow:Number(gf('away-yellow'))||0,
+    homeRed:Number(gf('home-red'))||0, awayRed:Number(gf('away-red'))||0,
+    homeSubs:Number(gf('home-subs'))||0, awaySubs:Number(gf('away-subs'))||0,
+    attendance:Number(gf('attendance'))||0, capacity:Number(gf('capacity'))||0,
+  };
+  setSaveStatus(false);
+  if(editId){ matches=matches.map(m=>m.id===editId?entry:m); editId=null; }
+  else { matches.unshift(entry); }
+  await saveAll();
+  clearForm();
+  updateMatchCount();
+  showFlash('✅ Матч сохранён');
+  switchTab('history');
+}
+
+function clearForm(){
+  ['date','stadium','home-team','away-team','home-goals','away-goals',
+   'home-yellow','away-yellow','home-red','away-red','home-subs','away-subs','attendance','capacity'
+  ].forEach(id=>{ sf('f-'+id,''); showErr(id,false); });
+  document.getElementById('fill-preview').style.display='none';
+  document.getElementById('btn-cancel').classList.add('hidden');
+  document.getElementById('btn-submit').textContent='✅ Сохранить матч';
+  document.getElementById('tab-form').textContent='➕ Новый матч';
+  editId=null;
+}
+function cancelEdit(){ clearForm(); switchTab('history'); }
+
+function editMatch(id){
+  const m=matches.find(x=>x.id===id); if(!m) return;
+  editId=id;
+  sf('f-date',m.date); sf('f-stadium',m.stadium);
+  sf('f-home-team',m.homeTeam); sf('f-away-team',m.awayTeam);
+  sf('f-home-goals',m.homeGoals); sf('f-away-goals',m.awayGoals);
+  sf('f-home-yellow',m.homeYellow); sf('f-away-yellow',m.awayYellow);
+  sf('f-home-red',m.homeRed); sf('f-away-red',m.awayRed);
+  sf('f-home-subs',m.homeSubs); sf('f-away-subs',m.awaySubs);
+  sf('f-attendance',m.attendance); sf('f-capacity',m.capacity);
+  updateFillPreview();
+  document.getElementById('btn-cancel').classList.remove('hidden');
+  document.getElementById('btn-submit').textContent='💾 Сохранить изменения';
+  switchTab('form');
+}
+
+async function deleteMatch(id){
+  if(!confirm('Удалить этот матч?')) return;
+  matches=matches.filter(m=>m.id!==id);
+  await saveAll();
+  updateMatchCount(); renderHistory(); renderStats();
+}
+
+// ── History ───────────────────────────────────────────────
+function renderHistory(){
+  const list=document.getElementById('history-list');
+  const empty=document.getElementById('history-empty');
+  if(matches.length===0){ empty.classList.remove('hidden'); list.innerHTML=''; return; }
+  empty.classList.add('hidden');
+  list.innerHTML=matches.map(m=>{
+    const rc=resultColor(m), rl=resultLabel(m);
+    const pct=fillPct(m);
+    const fillBar=pct!==null?`
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:#64748b">Заполняемость</span>
+          <span style="color:${fillColor(pct)};font-weight:700">${pct}% · ${fmtNum(m.attendance)} / ${fmtNum(m.capacity)}</span>
+        </div>
+        <div class="fill-bar-bg"><div class="fill-bar-fg" style="width:${pct}%;background:${fillColor(pct)}"></div></div>
+      </div>`:'';
+    return `<div class="match-card" style="border-left-color:${rc}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:12px;color:#64748b">${fmtDate(m.date)}${m.stadium?' · '+m.stadium:''}</div>
+        <span style="background:${rc}22;color:${rc};padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700">${rl}</span>
+      </div>
+      <div class="score-row">
+        <div style="font-weight:700;font-size:15px;color:#fff">${m.homeTeam}</div>
+        <div class="score-box">${m.homeGoals} : ${m.awayGoals}</div>
+        <div style="font-weight:700;font-size:15px;color:#fff;text-align:right">${m.awayTeam}</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-cell"><div style="font-size:13px">⚽</div><div style="font-size:13px;font-weight:700;color:#fff">${m.homeGoals+m.awayGoals}</div><div style="font-size:9px;color:#475569">Голы</div></div>
+        <div class="stat-cell"><div style="font-size:13px">🟨</div><div style="font-size:13px;font-weight:700;color:#fff">${m.homeYellow+m.awayYellow}</div><div style="font-size:9px;color:#475569">Жёлтые</div></div>
+        <div class="stat-cell"><div style="font-size:13px">🟥</div><div style="font-size:13px;font-weight:700;color:#fff">${m.homeRed+m.awayRed}</div><div style="font-size:9px;color:#475569">Красные</div></div>
+        <div class="stat-cell"><div style="font-size:13px">🔄</div><div style="font-size:13px;font-weight:700;color:#fff">${m.homeSubs+m.awaySubs}</div><div style="font-size:9px;color:#475569">Замены</div></div>
+        <div class="stat-cell"><div style="font-size:13px">👥</div><div style="font-size:11px;font-weight:700;color:#fff">${m.attendance?m.attendance.toLocaleString('ru-RU'):'—'}</div><div style="font-size:9px;color:#475569">Зрители</div></div>
+      </div>
+      ${fillBar}
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:11px;color:#64748b;margin-bottom:10px">
+        <div>🟨 ${m.homeYellow}/${m.awayYellow}</div>
+        <div>🟥 ${m.homeRed}/${m.awayRed}</div>
+        <div>🔄 ${m.homeSubs}/${m.awaySubs}</div>
+      </div>
+      <div class="actions">
+        <button class="btn-edit" onclick="editMatch(${m.id})">✏️ Редактировать</button>
+        <button class="btn-del" onclick="deleteMatch(${m.id})">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Stats ─────────────────────────────────────────────────
+function renderStats(){
+  const content=document.getElementById('stats-content');
+  const empty=document.getElementById('stats-empty');
+  if(matches.length===0){ empty.classList.remove('hidden'); content.innerHTML=''; return; }
+  empty.classList.add('hidden');
+  const tg=matches.reduce((s,m)=>s+m.homeGoals+m.awayGoals,0);
+  const ty=matches.reduce((s,m)=>s+m.homeYellow+m.awayYellow,0);
+  const tr=matches.reduce((s,m)=>s+m.homeRed+m.awayRed,0);
+  const ts=matches.reduce((s,m)=>s+m.homeSubs+m.awaySubs,0);
+  const ta=matches.reduce((s,m)=>s+m.attendance,0);
+  const avgA=matches.length?Math.round(ta/matches.length):0;
+  const withCap=matches.filter(m=>m.capacity>0&&m.attendance>0);
+  const avgF=withCap.length?Math.round(withCap.reduce((s,m)=>s+fillPct(m),0)/withCap.length):null;
+  const topA=matches.length?matches.reduce((b,m)=>m.attendance>b.attendance?m:b,matches[0]):null;
+  const cards=[
+    {e:'🏟️',l:'Матчей',v:matches.length,c:'#818cf8'},
+    {e:'⚽',l:'Всего голов',v:tg,c:'#22c55e'},
+    {e:'🟨',l:'Жёлтых',v:ty,c:'#f59e0b'},
+    {e:'🟥',l:'Красных',v:tr,c:'#ef4444'},
+    {e:'🔄',l:'Замен',v:ts,c:'#a78bfa'},
+    {e:'👥',l:'Средняя посещ.',v:avgA.toLocaleString('ru-RU'),c:'#38bdf8'},
+    ...(avgF!==null?[{e:'📊',l:'Средняя заполн.',v:avgF+'%',c:fillColor(avgF)}]:[]),
+  ].map(c=>`<div class="stat-card" style="border:1px solid ${c.c}33;border-top:3px solid ${c.c}">
+    <div style="font-size:18px;margin-bottom:6px">${c.e}</div>
+    <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:2px">${c.v}</div>
+    <div style="font-size:11px;color:#64748b">${c.l}</div>
+  </div>`).join('');
+
+  const fillChart=withCap.length?`<div class="card" style="margin-bottom:12px">
+    <div class="section-label">📊 Заполняемость по матчам</div>
+    ${withCap.map(m=>{const p=fillPct(m);return `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+          <span style="color:#e2e8f0">${m.homeTeam} vs ${m.awayTeam}</span>
+          <span style="color:${fillColor(p)};font-weight:700">${p}%</span>
+        </div>
+        <div class="fill-bar-bg"><div class="fill-bar-fg" style="width:${p}%;background:${fillColor(p)}"></div></div>
+        <div style="font-size:10px;color:#475569;margin-top:2px">${fmtNum(m.attendance)} / ${fmtNum(m.capacity)}</div>
+      </div>`;}).join('')}
+  </div>`:'';
+
+  const maxG=Math.max(...matches.map(m=>m.homeGoals+m.awayGoals),1);
+  const goalsChart=`<div class="card" style="margin-bottom:12px">
+    <div class="section-label">⚽ Голов за матч</div>
+    ${matches.map(m=>{const t=m.homeGoals+m.awayGoals;return `
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+          <span style="color:#e2e8f0">${m.homeTeam} ${m.homeGoals}:${m.awayGoals} ${m.awayTeam}</span>
+          <span style="color:#22c55e;font-weight:700">${t}</span>
+        </div>
+        <div class="fill-bar-bg"><div class="fill-bar-fg" style="width:${(t/maxG)*100}%;background:linear-gradient(90deg,#16a34a,#22c55e)"></div></div>
+      </div>`;}).join('')}
+  </div>`;
+
+  const topCard=topA&&topA.attendance>0?`<div style="background:rgba(56,189,248,0.07);border:1px solid rgba(56,189,248,0.2);border-radius:14px;padding:16px">
+    <div style="font-size:13px;color:#38bdf8;margin-bottom:8px;font-weight:600">🏆 Рекорд посещаемости</div>
+    <div style="font-size:20px;font-weight:800;color:#fff">${topA.attendance.toLocaleString('ru-RU')} зрителей</div>
+    <div style="font-size:13px;color:#94a3b8;margin-top:4px">${topA.homeTeam} ${topA.homeGoals}:${topA.awayGoals} ${topA.awayTeam}${topA.stadium?' · '+topA.stadium:''}</div>
+  </div>`:'';
+
+  content.innerHTML=`<div class="stat-cards">${cards}</div>${fillChart}${goalsChart}${topCard}`;
+}
+
+// ── Init ──────────────────────────────────────────────────
+async function init(){
+  try {
+    await openDB();
+    const stored = await dbGetAll();
+    // Sort by id desc (newest first)
+    matches = stored.sort((a,b) => b.id - a.id);
+    updateMatchCount();
+    setSaveStatus(true);
+  } catch(e) {
+    showFlash('⚠️ Ошибка загрузки данных', true);
+  }
+}
+init();
+</script>
+</body>
+</html>
